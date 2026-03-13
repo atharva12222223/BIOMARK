@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Biomark — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--y:#FFD700;--dk:#2b3a4a;--dk2:#1a253a;--gr:#cfd8dc}
+body{font-family:'Poppins',sans-serif;background:var(--dk2);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+a{color:inherit;text-decoration:none}
+
+.back{position:fixed;top:20px;left:24px;color:#fff;font-weight:600;font-size:.9rem;opacity:.7;transition:opacity .2s}
+.back:hover{opacity:1}
+.brand{color:var(--y);font-size:1.5rem;font-weight:800;letter-spacing:3px;margin-bottom:32px;text-align:center}
+
+/* TAB switcher */
+.tabs{display:flex;background:rgba(255,255,255,.07);border-radius:30px;padding:4px;margin-bottom:28px;width:280px}
+.tab{flex:1;text-align:center;padding:10px;border-radius:26px;font-weight:700;font-size:.9rem;cursor:pointer;color:rgba(255,255,255,.5);transition:all .25s}
+.tab.active{background:var(--y);color:var(--dk2)}
+
+/* FORM BOX */
+.box{background:#1e2d40;border-radius:18px;padding:36px 32px;width:380px;border:1px solid rgba(255,255,255,.07);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.panel{display:none}
+.panel.active{display:block}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.field label{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
+.field .inp-wrap{position:relative}
+.field .inp-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.3);font-size:.9rem}
+.field input{width:100%;padding:11px 14px 11px 38px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;transition:border .2s}
+.field input:focus{border-color:var(--y)}
+.field input::placeholder{color:rgba(255,255,255,.25)}
+
+.err{color:#e74c3c;font-size:.82rem;font-weight:600;margin-bottom:12px;min-height:18px}
+.btn-login{width:100%;padding:13px;background:var(--y);color:var(--dk2);font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;border:none;border-radius:12px;cursor:pointer;transition:opacity .2s,transform .15s}
+.btn-login:hover{opacity:.88;transform:scale(1.01)}
+.btn-login:disabled{opacity:.4;cursor:not-allowed;transform:none}
+</style>
+</head>
+<body>
+
+<a href="/" class="back"><i class="fa-solid fa-arrow-left"></i> Back</a>
+
+<div class="brand">BIOMARK</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('student')"><i class="fa-solid fa-graduation-cap"></i> Student</div>
+  <div class="tab"        onclick="switchTab('teacher')"><i class="fa-solid fa-chalkboard-user"></i> Teacher</div>
+</div>
+
+<div class="box">
+
+  <!-- STUDENT -->
+  <div class="panel active" id="panel-student">
+    <div class="field">
+      <label>Register Number</label>
+      <div class="inp-wrap"><i class="fa-solid fa-id-card"></i>
+        <input type="text" id="s-regno" placeholder="e.g. 457CS23063">
+      </div>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="inp-wrap"><i class="fa-solid fa-lock"></i>
+        <input type="password" id="s-pass" placeholder="Your password">
+      </div>
+    </div>
+    <div class="err" id="s-err"></div>
+    <button class="btn-login" id="s-btn" onclick="loginStudent()">
+      <i class="fa-solid fa-right-to-bracket"></i> Login as Student
+    </button>
+  </div>
+
+  <!-- TEACHER -->
+  <div class="panel" id="panel-teacher">
+    <div class="field">
+      <label>Username</label>
+      <div class="inp-wrap"><i class="fa-solid fa-user"></i>
+        <input type="text" id="t-user" placeholder="e.g. sonali">
+      </div>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="inp-wrap"><i class="fa-solid fa-lock"></i>
+        <input type="password" id="t-pass" placeholder="Your password">
+      </div>
+    </div>
+    <div class="err" id="t-err"></div>
+    <button class="btn-login" id="t-btn" onclick="loginTeacher()">
+      <i class="fa-solid fa-right-to-bracket"></i> Login as Teacher
+    </button>
+  </div>
+
+</div>
+
+<script>
+function switchTab(role) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.closest('.tab').classList.add('active');
+  document.getElementById('panel-'+role).classList.add('active');
+}
+
+async function post(url, body) {
+  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.detail || 'Login failed');
+  return d;
+}
+
+async function loginStudent() {
+  const regno = document.getElementById('s-regno').value.trim();
+  const pass  = document.getElementById('s-pass').value;
+  const err   = document.getElementById('s-err');
+  const btn   = document.getElementById('s-btn');
+  err.textContent = '';
+  if (!regno || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const d = await post('/api/auth/student', {regno, password:pass});
+    localStorage.setItem('bm_token', d.token);
+    localStorage.setItem('bm_role',  d.role);
+    localStorage.setItem('bm_name',  d.name);
+    window.location.href = '/student';
+  } catch(e) {
+    err.textContent = e.message;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login as Student';
+  }
+}
+
+async function loginTeacher() {
+  const username = document.getElementById('t-user').value.trim();
+  const pass     = document.getElementById('t-pass').value;
+  const err      = document.getElementById('t-err');
+  const btn      = document.getElementById('t-btn');
+  err.textContent = '';
+  if (!username || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const d = await post('/api/auth/teacher', {username, password:pass});
+    localStorage.setItem('bm_token', d.token);
+    localStorage.setItem('bm_role',  d.role);
+    localStorage.setItem('bm_name',  d.name);
+    window.location.href = '/teacher';
+  } catch(e) {
+    err.textContent = e.message;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login as Teacher';
+  }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('panel-student').classList.contains('active')) loginStudent();
+  else loginTeacher();
+});
+</script>
+</body>
+</html>

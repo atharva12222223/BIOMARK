@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Biomark — Register</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--y:#FFD700;--dk:#2c3e50;--dk2:#34495e;--pu:#8e44ad}
+body{font-family:'Poppins',sans-serif;background:var(--dk2);color:#fff;min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+header{background:var(--dk);padding:14px 36px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid rgba(241,196,15,.25)}
+.logo{font-size:1.5rem;font-weight:800;letter-spacing:3px;color:var(--y)}
+.back-btn{background:#fff;color:var(--dk);padding:8px 20px;border-radius:25px;font-weight:700;font-size:.88rem;text-decoration:none;display:flex;align-items:center;gap:8px;transition:transform .15s}
+.back-btn:hover{transform:scale(1.04)}
+
+/* PAGE TITLE */
+.page-title{text-align:center;color:#bdc3c7;font-size:2rem;font-weight:700;padding:28px 20px 8px}
+
+/* MAIN LAYOUT */
+.container{max-width:980px;margin:0 auto;padding:10px 24px 60px;display:flex;gap:48px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+
+/* CAMERA */
+.cam-section{display:flex;flex-direction:column;align-items:center;gap:14px}
+.cam-box{width:360px;height:300px;background:var(--y);border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--dk);font-size:1rem;position:relative}
+.cam-box video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;border-radius:18px}
+.cam-box .cam-label{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:#fff;padding:4px 14px;border-radius:20px;font-size:.78rem;font-weight:600;display:none}
+.prog-track{width:360px;height:12px;background:rgba(255,255,255,.2);border-radius:6px;overflow:hidden}
+.prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--pu),var(--y));border-radius:6px;transition:width .3s}
+.prog-text{font-size:.83rem;color:#bdc3c7;font-weight:500}
+
+/* FORM */
+.form-section{display:flex;flex-direction:column;gap:13px;width:320px;padding-top:6px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.71rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.field input{background:#fff;border:none;border-radius:11px;padding:11px 14px;font-size:.9rem;font-family:'Poppins',sans-serif;color:var(--dk);outline:none;width:100%;transition:box-shadow .2s}
+.field input:focus{box-shadow:0 0 0 3px rgba(241,196,15,.45)}
+
+.divider{height:1px;background:rgba(255,255,255,.15);border-radius:1px}
+
+/* QR area */
+.qr-area{display:flex;flex-direction:column;gap:10px}
+.btn-qr{background:var(--dk);color:#fff;border:2px solid rgba(255,255,255,.2);padding:10px 16px;border-radius:11px;font-family:'Poppins',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color .2s;width:100%}
+.btn-qr:hover:not(:disabled){border-color:var(--y)}
+.btn-qr:disabled{opacity:.45;cursor:not-allowed}
+.qr-img-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;display:none}
+.qr-img-wrap img{width:150px;border-radius:10px;border:3px solid var(--y)}
+.btn-dl-qr{background:var(--y);color:var(--dk);border:none;padding:8px 20px;border-radius:20px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.83rem;cursor:pointer;display:flex;align-items:center;gap:7px;transition:transform .15s}
+.btn-dl-qr:hover{transform:scale(1.04)}
+
+/* Big buttons */
+.btn-scan{background:linear-gradient(to bottom,var(--y),#f39c12);border:3px solid var(--pu);padding:12px 16px;border-radius:25px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;color:var(--dk);width:100%;transition:transform .15s,opacity .2s}
+.btn-scan:hover:not(:disabled){transform:scale(1.02)}
+.btn-scan:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-submit{background:linear-gradient(to right,var(--pu),var(--y));border:none;padding:13px;border-radius:25px;color:var(--dk);font-family:'Poppins',sans-serif;font-weight:800;font-size:.97rem;cursor:pointer;width:100%;transition:transform .15s,opacity .2s;margin-top:2px}
+.btn-submit:hover:not(:disabled){transform:scale(1.02)}
+.btn-submit:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.note{font-size:.75rem;color:#bdc3c7;text-align:center;margin-top:-6px}
+.status{text-align:center;font-size:.83rem;font-weight:600;min-height:18px}
+.status.ok{color:#2ecc71}.status.err{color:#e74c3c}
+
+footer{background:var(--y);color:var(--dk);display:flex;justify-content:space-between;align-items:center;padding:13px 36px;font-weight:700;font-size:.88rem;margin-top:auto}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BIOMARK</div>
+  <a href="#" onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+</header>
+
+<h1 class="page-title">Create Account</h1>
+
+<div class="container">
+
+  <!-- LEFT: Camera -->
+  <div class="cam-section">
+    <div class="cam-box" id="camBox">
+      <video id="video" autoplay muted playsinline></video>
+      <span id="camLabel" class="cam-label"></span>
+      <span id="camText">face scan preview</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <p class="prog-text" id="progText">0 / 20 faces captured</p>
+  </div>
+
+  <!-- RIGHT: Form -->
+  <div class="form-section">
+
+    <div class="field">
+      <label><i class="fa-solid fa-user"></i> Full Name</label>
+      <input type="text" id="name" placeholder="Enter your full name">
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-id-card"></i> Register Number</label>
+      <input type="text" id="regno" placeholder="e.g. 457CS23063">
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-graduation-cap"></i> Class</label>
+      <input type="text" id="cls" placeholder="e.g. 5th Sem A">
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-lock"></i> Set Password</label>
+      <input type="password" id="pw1" placeholder="Min 6 characters">
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-lock"></i> Confirm Password</label>
+      <input type="password" id="pw2" placeholder="Re-enter password">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- QR -->
+    <div class="qr-area">
+      <button class="btn-qr" id="qrBtn" onclick="genQR()">
+        <i class="fa-solid fa-qrcode"></i> Generate QR Code
+      </button>
+      <div class="qr-img-wrap" id="qrWrap">
+        <img id="qrImg" src="" alt="QR Code">
+        <button class="btn-dl-qr" id="qrDlBtn">
+          <i class="fa-solid fa-download"></i> Download QR
+        </button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="btn-scan" id="scanBtn" onclick="startScan()">
+      <i class="fa-solid fa-camera"></i> &nbsp;Scan Your Face
+    </button>
+    <p class="note">Make sure your face is well-lit and centred</p>
+
+    <p class="status" id="status"></p>
+
+    <button class="btn-submit" id="submitBtn" disabled onclick="submit()">
+      Submit Registration
+    </button>
+
+  </div>
+</div>
+
+<footer>
+  <span>Get to know us &nbsp;<i class="fa-brands fa-instagram"></i></span>
+  <strong>BIOMARK</strong>
+  <span>Connect with us &nbsp;<i class="fa-regular fa-envelope"></i></span>
+</footer>
+
+<script>
+let stream=null, interval=null, scanCount=0, qrUrl=null;
+
+function msg(text, type='') {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = 'status'+(type?' '+type:'');
+}
+
+function updateProg(n) {
+  document.getElementById('progFill').style.width = (n/20*100)+'%';
+  document.getElementById('progText').textContent = `${n} / 20 faces captured`;
+}
+
+// Generate QR
+async function genQR() {
+  const name  = document.getElementById('name').value.trim();
+  const regno = document.getElementById('regno').value.trim();
+  if (!name||!regno) { msg('Enter name and register number first.','err'); return; }
+
+  const btn = document.getElementById('qrBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+  try {
+    const url = `/api/qr?name=${encodeURIComponent(name)}&regno=${encodeURIComponent(regno)}`;
+    const r   = await fetch(url);
+    if (!r.ok) throw new Error('Failed');
+
+    const blob = await r.blob();
+    qrUrl = URL.createObjectURL(blob);
+
+    const qrImg  = document.getElementById('qrImg');
+    const qrWrap = document.getElementById('qrWrap');
+    const qrDl   = document.getElementById('qrDlBtn');
+
+    qrImg.src = qrUrl;
+    qrWrap.style.display = 'flex';
+
+    // Download button
+    qrDl.onclick = () => {
+      const a = document.createElement('a');
+      a.href = qrUrl;
+      a.download = `${regno}_QR.png`;
+      a.click();
+    };
+
+    msg('QR Code generated! Click Download to save it.','ok');
+  } catch { msg('Could not generate QR — is the server running?','err'); }
+  finally {
+    btn.innerHTML = '<i class="fa-solid fa-qrcode"></i> Regenerate QR';
+    btn.disabled = false;
+  }
+}
+
+// Start face scan
+async function startScan() {
+  const name  = document.getElementById('name').value.trim();
+  const regno = document.getElementById('regno').value.trim();
+  if (!name||!regno) { msg('Enter name and register number first.','err'); return; }
+
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  clearInterval(interval); interval=null;
+  scanCount=0; updateProg(0);
+  document.getElementById('submitBtn').disabled = true;
+
+  msg('Starting camera...');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:true});
+  } catch {
+    msg('Camera access denied. Allow camera permissions.','err'); return;
+  }
+
+  const video = document.getElementById('video');
+  const label = document.getElementById('camLabel');
+  const text  = document.getElementById('camText');
+  video.srcObject = stream;
+  video.style.display = 'block';
+  text.style.display  = 'none';
+  label.style.display = 'block';
+  label.textContent   = 'Scanning...';
+  msg('Look at the camera 👀');
+
+  const canvas = document.createElement('canvas');
+  const ctx    = canvas.getContext('2d');
+
+  interval = setInterval(async () => {
+    if (!video.videoWidth) return;
+    canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+    ctx.drawImage(video,0,0);
+
+    try {
+      const r = await fetch('/api/face', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name,regno,image:canvas.toDataURL('image/jpeg')})
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (typeof d.count === 'number') { scanCount=d.count; updateProg(scanCount); }
+      if (d.done || scanCount>=20) {
+        clearInterval(interval); interval=null;
+        stream.getTracks().forEach(t=>t.stop()); stream=null;
+        video.style.display='none';
+        text.style.display='block';
+        label.style.display='none';
+        document.getElementById('submitBtn').disabled=false;
+        msg('✅ Face scan complete! Click Submit to register.','ok');
+      }
+    } catch { clearInterval(interval); msg('Scan error. Try again.','err'); }
+  }, 300);
+}
+
+// Submit
+async function submit() {
+  const name  = document.getElementById('name').value.trim();
+  const regno = document.getElementById('regno').value.trim();
+  const cls   = document.getElementById('cls').value.trim() || 'General';
+  const pw1   = document.getElementById('pw1').value;
+  const pw2   = document.getElementById('pw2').value;
+
+  if (!name||!regno||!pw1) { msg('Please fill all fields.','err'); return; }
+  if (pw1.length<6)         { msg('Password must be at least 6 characters.','err'); return; }
+  if (pw1!==pw2)            { msg('Passwords do not match.','err'); return; }
+  if (scanCount<20)         { msg(`Complete face scan first (${scanCount}/20).`,'err'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='Submitting...';
+
+  try {
+    const r = await fetch('/api/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,regno,cls,password:pw1})
+    });
+    const d = await r.json();
+    if (r.ok && d.success) {
+      msg(`✅ Account created for ${name}! Form cleared — add another student.`,'ok');
+      // Reset form
+      ['name','regno','cls','pw1','pw2'].forEach(id=>document.getElementById(id).value='');
+      scanCount=0; updateProg(0);
+      btn.disabled=true; btn.textContent='Submit Registration';
+      document.getElementById('qrWrap').style.display='none';
+    } else {
+      msg('❌ '+(d.detail||'Registration failed.'),'err');
+      btn.disabled=false; btn.textContent='Submit Registration';
+    }
+  } catch {
+    msg('❌ Cannot connect to server.','err');
+    btn.disabled=false; btn.textContent='Submit Registration';
+  }
+}
+</script>
+</body>
+</html>

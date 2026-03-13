@@ -1,0 +1,28 @@
+# render.yaml — Render Blueprint
+# Push this repo to GitHub, then create a new Blueprint on Render
+# pointing to your repo. It will auto-create the service + database.
+
+databases:
+  - name: biomark-db
+    plan: free
+    databaseName: biomark
+    user: biomark
+
+services:
+  - type: web
+    name: biomark
+    plan: free
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && gunicorn main_app:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: biomark-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FACE_API_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.9
