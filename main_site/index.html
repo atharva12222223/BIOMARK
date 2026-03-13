@@ -157,6 +157,13 @@
       color: rgba(43, 58, 74, .35)
     }
 
+    .split-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+
     .split-text {
       flex: 1;
       padding: 60px;
@@ -210,7 +217,7 @@
   </section>
 
   <section class="split">
-    <div class="split-img l" href="img1.png"><i class="fa-solid fa-face-smile"></i></div>
+    <div class="split-img l"><img src="/static/img1.png" alt="Face Recognition"></div>
     <div class="split-text">
       <h2>Seamless Identification</h2>
       <p>Our facial recognition instantly generates a unique, secure QR identity for every student. No more manual logs
@@ -219,7 +226,7 @@
   </section>
 
   <section class="split rev">
-    <div class="split-img r" href="img2.png"><i class="fa-solid fa-chart-line"></i></div>
+    <div class="split-img r"><img src="/static/img2.png" alt="Dashboard"></div>
     <div class="split-text">
       <h2>Data at Your Fingertips</h2>
       <p>Teachers access live attendance records, student profiles, marks, and reports — all from a clean, fast
