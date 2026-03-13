@@ -1,78 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Biomark</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--y:#FFD700;--dk:#2b3a4a;--dk2:#1a253a;--gr:#cfd8dc;--tx:#d0d0d0}
-body{font-family:'Poppins',sans-serif;background:var(--dk2);color:#fff;min-height:100vh;display:flex;flex-direction:column}
-nav{background:var(--gr);padding:12px 40px;display:flex;justify-content:space-between;align-items:center}
-.logo{font-size:1.5rem;font-weight:800;color:var(--dk2);letter-spacing:3px}
-.nav-links{display:flex;gap:28px}
-.nav-links a{color:var(--dk2);font-weight:600;text-decoration:none;font-size:.95rem}
-.nav-links a:hover{opacity:.7}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:25px;font-family:'Poppins',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;border:none;text-decoration:none;transition:transform .15s,opacity .15s}
-.btn:hover{transform:scale(1.04)}
-.btn-y{background:var(--y);color:var(--dk2)}
-.btn-ol{background:transparent;border:2px solid var(--y);color:var(--y)}
-.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 20px}
-.hero h1{font-size:5rem;font-weight:800;color:var(--y);letter-spacing:8px;margin-bottom:18px}
-.hero p{font-size:1.1rem;color:var(--tx);max-width:560px;line-height:1.8;margin-bottom:40px}
-.hero-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
-.split{display:flex;align-items:stretch;min-height:45vh}
-.split.rev{flex-direction:row-reverse}
-.split-img{flex:1;background:var(--y);display:flex;align-items:center;justify-content:center;padding:60px}
-.split-img.l{border-radius:0 60px 60px 0}
-.split-img.r{border-radius:60px 0 0 60px}
-.split-img i{font-size:7rem;color:rgba(43,58,74,.35)}
-.split-text{flex:1;padding:60px;display:flex;flex-direction:column;justify-content:center}
-.split-text h2{color:var(--y);font-size:1.7rem;margin-bottom:14px}
-.split-text p{color:var(--tx);line-height:1.8;font-size:.95rem}
-footer{background:var(--y);color:var(--dk2);display:flex;justify-content:space-between;align-items:center;padding:14px 40px;font-weight:700;font-size:.9rem}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Biomark</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    :root {
+      --y: #FFD700;
+      --dk: #2b3a4a;
+      --dk2: #1a253a;
+      --gr: #cfd8dc;
+      --tx: #d0d0d0
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--dk2);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column
+    }
+
+    nav {
+      background: var(--gr);
+      padding: 12px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--dk2);
+      letter-spacing: 3px
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px
+    }
+
+    .nav-links a {
+      color: var(--dk2);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: .95rem
+    }
+
+    .nav-links a:hover {
+      opacity: .7
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border-radius: 25px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: .9rem;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: transform .15s, opacity .15s
+    }
+
+    .btn:hover {
+      transform: scale(1.04)
+    }
+
+    .btn-y {
+      background: var(--y);
+      color: var(--dk2)
+    }
+
+    .btn-ol {
+      background: transparent;
+      border: 2px solid var(--y);
+      color: var(--y)
+    }
+
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 20px
+    }
+
+    .hero h1 {
+      font-size: 5rem;
+      font-weight: 800;
+      color: var(--y);
+      letter-spacing: 8px;
+      margin-bottom: 18px
+    }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--tx);
+      max-width: 560px;
+      line-height: 1.8;
+      margin-bottom: 40px
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center
+    }
+
+    .split {
+      display: flex;
+      align-items: stretch;
+      min-height: 45vh
+    }
+
+    .split.rev {
+      flex-direction: row-reverse
+    }
+
+    .split-img {
+      flex: 1;
+      background: var(--y);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px
+    }
+
+    .split-img.l {
+      border-radius: 0 60px 60px 0
+    }
+
+    .split-img.r {
+      border-radius: 60px 0 0 60px
+    }
+
+    .split-img i {
+      font-size: 7rem;
+      color: rgba(43, 58, 74, .35)
+    }
+
+    .split-text {
+      flex: 1;
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center
+    }
+
+    .split-text h2 {
+      color: var(--y);
+      font-size: 1.7rem;
+      margin-bottom: 14px
+    }
+
+    .split-text p {
+      color: var(--tx);
+      line-height: 1.8;
+      font-size: .95rem
+    }
+
+    footer {
+      background: var(--y);
+      color: var(--dk2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 40px;
+      font-weight: 700;
+      font-size: .9rem
+    }
+  </style>
 </head>
+
 <body>
-<nav>
-  <div class="logo">BIOMARK</div>
-  <div class="nav-links">
-    <a href="#">Home</a>
-    <a href="#">About</a>
-    <a href="#">Contact</a>
-  </div>
-  <a href="/login" class="btn btn-y"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-</nav>
-
-<section class="hero">
-  <h1>BIOMARK</h1>
-  <p>Biometric attendance made simple. Facial recognition, QR identity, real-time dashboards — all in one place.</p>
-  <div class="hero-btns">
+  <nav>
+    <div class="logo">BIOMARK</div>
+    <div class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+    </div>
     <a href="/login" class="btn btn-y"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-  </div>
-</section>
+  </nav>
 
-<section class="split">
-  <div class="split-img l"><i class="fa-solid fa-face-smile"></i></div>
-  <div class="split-text">
-    <h2>Seamless Identification</h2>
-    <p>Our facial recognition instantly generates a unique, secure QR identity for every student. No more manual logs — just scan and go.</p>
-  </div>
-</section>
+  <section class="hero">
+    <h1>BIOMARK</h1>
+    <p>Biometric attendance made simple. Facial recognition, QR identity, real-time dashboards — all in one place.</p>
+    <div class="hero-btns">
+      <a href="/login" class="btn btn-y"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+    </div>
+  </section>
 
-<section class="split rev">
-  <div class="split-img r"><i class="fa-solid fa-chart-line"></i></div>
-  <div class="split-text">
-    <h2>Data at Your Fingertips</h2>
-    <p>Teachers access live attendance records, student profiles, marks, and reports — all from a clean, fast dashboard.</p>
-  </div>
-</section>
+  <section class="split">
+    <div class="split-img l" href="img1.png"><i class="fa-solid fa-face-smile"></i></div>
+    <div class="split-text">
+      <h2>Seamless Identification</h2>
+      <p>Our facial recognition instantly generates a unique, secure QR identity for every student. No more manual logs
+        — just scan and go.</p>
+    </div>
+  </section>
 
-<footer>
-  <span>Get to know us &nbsp;<i class="fa-brands fa-instagram"></i></span>
-  <strong>BIOMARK</strong>
-  <span>Connect with us &nbsp;<i class="fa-regular fa-envelope"></i></span>
-</footer>
+  <section class="split rev">
+    <div class="split-img r" href="img2.png"><i class="fa-solid fa-chart-line"></i></div>
+    <div class="split-text">
+      <h2>Data at Your Fingertips</h2>
+      <p>Teachers access live attendance records, student profiles, marks, and reports — all from a clean, fast
+        dashboard.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Get to know us &nbsp;<i class="fa-brands fa-instagram"></i></span>
+    <strong>BIOMARK</strong>
+    <span>Connect with us &nbsp;<i class="fa-regular fa-envelope"></i></span>
+  </footer>
 </body>
+
 </html>
