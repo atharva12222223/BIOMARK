@@ -7,7 +7,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from database import init_db, get_db, hash_password
 
-FACE_DIR = os.path.join(os.path.dirname(__file__), "..", "face_site")
+# ── Remote sync config ──────────────────────────────────
+try:
+    import requests as req_lib
+    REQUESTS_OK = True
+except ImportError:
+    REQUESTS_OK = False
+
+REMOTE_API_URL = os.getenv("REMOTE_API_URL", "")
+FACE_API_KEY   = os.getenv("FACE_API_KEY", "biomark-face-key-change-me")
+USE_REMOTE     = bool(REMOTE_API_URL) and REQUESTS_OK
+
+FACE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "face_site")
 
 app = FastAPI()
 # NOTE: In production, replace "*" with specific allowed origins
@@ -20,7 +31,12 @@ os.makedirs("qrcodes", exist_ok=True)
 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
 @app.on_event("startup")
-def startup(): init_db()
+def startup():
+    init_db()
+    if USE_REMOTE:
+        print(f"  Remote sync ON: {REMOTE_API_URL}")
+    else:
+        print("  Remote sync OFF (set REMOTE_API_URL to enable)")
 
 def safe(s): return re.sub(r'[^a-zA-Z0-9_\-]','_',s)
 
@@ -45,7 +61,28 @@ def register(r:RegReq):
     db.execute("INSERT INTO students (name,regno,cls,password_hash) VALUES (?,?,?,?)",
                (r.name,r.regno.upper(),r.cls,hash_password(r.password)))
     db.commit(); db.close()
-    return {"success":True,"message":f"Account created for {r.name}"}
+
+    # Also register on remote server if configured
+    remote_msg = ""
+    if USE_REMOTE:
+        try:
+            resp = req_lib.post(
+                f"{REMOTE_API_URL.rstrip('/')}/api/face/register-student",
+                json={"name":r.name, "regno":r.regno, "cls":r.cls,
+                      "password":r.password, "api_key":FACE_API_KEY},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                remote_msg = " (synced to remote)"
+                print(f"  Remote sync OK: {r.name} ({r.regno})")
+            else:
+                remote_msg = " (remote sync failed)"
+                print(f"  Remote sync FAILED: {resp.text}")
+        except Exception as e:
+            remote_msg = " (remote unreachable)"
+            print(f"  Remote sync error: {e}")
+
+    return {"success":True,"message":f"Account created for {r.name}{remote_msg}"}
 
 # ── Face scan frame upload ───────────────────────────────
 class FaceReq(BaseModel):
