@@ -119,8 +119,7 @@ footer{background:var(--y);color:var(--dk2);display:flex;justify-content:space-b
         <p>Name: <span id="pName">—</span></p>
         <p>Roll No: <span id="pRegno">—</span></p>
         <p>Class: <span id="pCls">—</span></p>
-        <p>Face Scan: <span id="pScan">—</span></p>
-        <div class="scan-bar"><div class="scan-fill" id="scanFill" style="width:0%"></div></div>
+
       </div>
     </div>
     <div class="card card-y">
@@ -218,8 +217,7 @@ async function load() {
     document.getElementById('pName').textContent  = d.name;
     document.getElementById('pRegno').textContent = d.regno;
     document.getElementById('pCls').textContent   = d.cls;
-    document.getElementById('pScan').textContent  = `${d.face_scans}/20 frames`;
-    document.getElementById('scanFill').style.width = Math.min(d.face_scans/20*100,100)+'%';
+
 
     // Donut
     const p = d.attendance.pct;
