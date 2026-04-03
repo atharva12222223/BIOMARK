@@ -215,4 +215,4 @@ def _seed(db):
                  (sid, scans))
 
     db.commit()
-    print("✅ Seeded | Teacher: sonali/sonali | Student: 457CS23063/parth123")
+    print("[OK] Seeded | Teacher: sonali/sonali | Student: 457CS23063/parth123")
