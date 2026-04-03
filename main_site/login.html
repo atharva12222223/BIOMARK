@@ -5,6 +5,7 @@
 <title>Biomark — Login</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--y:#FFD700;--dk:#2b3a4a;--dk2:#1a253a;--gr:#cfd8dc}
@@ -21,7 +22,7 @@ a{color:inherit;text-decoration:none}
 .tab.active{background:var(--y);color:var(--dk2)}
 
 /* FORM BOX */
-.box{background:#1e2d40;border-radius:18px;padding:36px 32px;width:380px;border:1px solid rgba(255,255,255,.07);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.box{background:#1e2d40;border-radius:18px;padding:36px 32px;width:400px;max-width:95vw;border:1px solid rgba(255,255,255,.07);box-shadow:0 8px 32px rgba(0,0,0,.4)}
 .panel{display:none}
 .panel.active{display:block}
 
@@ -37,6 +38,50 @@ a{color:inherit;text-decoration:none}
 .btn-login{width:100%;padding:13px;background:var(--y);color:var(--dk2);font-family:'Poppins',sans-serif;font-weight:800;font-size:1rem;border:none;border-radius:12px;cursor:pointer;transition:opacity .2s,transform .15s}
 .btn-login:hover{opacity:.88;transform:scale(1.01)}
 .btn-login:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ─── QR / Password toggle ─── */
+.login-divider{display:flex;align-items:center;gap:12px;margin:20px 0 16px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.12)}
+.login-divider span{color:rgba(255,255,255,.35);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+
+.btn-qr-toggle{width:100%;padding:13px;background:transparent;color:var(--y);font-family:'Poppins',sans-serif;font-weight:700;font-size:.92rem;border:2px solid var(--y);border-radius:12px;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-qr-toggle:hover{background:rgba(255,215,0,.1)}
+.btn-qr-toggle i{font-size:1.1rem}
+
+/* ─── QR Scanner area ─── */
+.qr-scanner-area{display:none;animation:fadeSlide .3s ease}
+.qr-scanner-area.active{display:block}
+.password-area{animation:fadeSlide .3s ease}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+#qr-reader{width:100%;border-radius:12px;overflow:hidden;margin-bottom:14px;border:2px solid rgba(255,215,0,.25)}
+#qr-reader video{border-radius:10px}
+/* Override html5-qrcode internal styles */
+#qr-reader__scan_region{min-height:220px}
+#qr-reader__dashboard{padding:8px !important}
+#qr-reader__dashboard_section{padding:4px !important}
+#qr-reader__dashboard_section_csr button{
+  background:var(--y) !important;color:var(--dk2) !important;
+  border:none !important;border-radius:8px !important;padding:8px 16px !important;
+  font-family:'Poppins',sans-serif !important;font-weight:700 !important;font-size:.82rem !important;
+  cursor:pointer !important
+}
+#qr-reader__dashboard select{
+  background:#1e2d40 !important;color:#fff !important;
+  border:1px solid rgba(255,255,255,.2) !important;border-radius:6px !important;
+  padding:4px 8px !important;font-family:'Poppins',sans-serif !important;font-size:.82rem !important
+}
+#qr-reader__status_span{color:rgba(255,255,255,.5) !important;font-size:.78rem !important}
+#qr-reader img[alt="Info icon"]{display:none !important}
+#qr-reader__header_message{display:none !important}
+
+.qr-status{text-align:center;padding:10px;font-size:.85rem;font-weight:600;border-radius:10px;margin-bottom:12px;min-height:18px;transition:all .3s}
+.qr-status.scanning{color:rgba(255,255,255,.5)}
+.qr-status.success{color:#2ecc71;background:rgba(46,204,113,.1)}
+.qr-status.error{color:#e74c3c;background:rgba(231,76,60,.1)}
+
+.scan-hint{text-align:center;color:rgba(255,255,255,.35);font-size:.78rem;margin-bottom:14px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -54,22 +99,49 @@ a{color:inherit;text-decoration:none}
 
   <!-- STUDENT -->
   <div class="panel active" id="panel-student">
-    <div class="field">
-      <label>Register Number</label>
-      <div class="inp-wrap"><i class="fa-solid fa-id-card"></i>
-        <input type="text" id="s-regno" placeholder="e.g. 457CS23063">
+
+    <!-- Password login form -->
+    <div class="password-area" id="passwordArea">
+      <div class="field">
+        <label>Register Number</label>
+        <div class="inp-wrap"><i class="fa-solid fa-id-card"></i>
+          <input type="text" id="s-regno" placeholder="e.g. 457CS23063">
+        </div>
       </div>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <div class="inp-wrap"><i class="fa-solid fa-lock"></i>
-        <input type="password" id="s-pass" placeholder="Your password">
+      <div class="field">
+        <label>Password</label>
+        <div class="inp-wrap"><i class="fa-solid fa-lock"></i>
+          <input type="password" id="s-pass" placeholder="Your password">
+        </div>
       </div>
+      <div class="err" id="s-err"></div>
+      <button class="btn-login" id="s-btn" onclick="loginStudent()">
+        <i class="fa-solid fa-right-to-bracket"></i> Login as Student
+      </button>
+
+      <div class="login-divider"><span>or</span></div>
+
+      <button class="btn-qr-toggle" onclick="showQRScanner()">
+        <i class="fa-solid fa-qrcode"></i> Scan QR Code to Login
+      </button>
     </div>
-    <div class="err" id="s-err"></div>
-    <button class="btn-login" id="s-btn" onclick="loginStudent()">
-      <i class="fa-solid fa-right-to-bracket"></i> Login as Student
-    </button>
+
+    <!-- QR Scanner area -->
+    <div class="qr-scanner-area" id="qrScannerArea">
+      <div class="scan-hint">
+        <i class="fa-solid fa-camera" style="font-size:1.1rem;color:var(--y);display:block;margin-bottom:6px"></i>
+        Point your camera at your student QR code
+      </div>
+      <div id="qr-reader"></div>
+      <div class="qr-status" id="qrStatus"></div>
+
+      <div class="login-divider"><span>or</span></div>
+
+      <button class="btn-qr-toggle" onclick="showPasswordLogin()">
+        <i class="fa-solid fa-keyboard"></i> Login with Roll No &amp; Password
+      </button>
+    </div>
+
   </div>
 
   <!-- TEACHER -->
@@ -95,13 +167,17 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <script>
+/* ─── Tab switching ─── */
 function switchTab(role) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   event.target.closest('.tab').classList.add('active');
   document.getElementById('panel-'+role).classList.add('active');
+  // Stop QR scanner if switching away from student tab
+  if (role !== 'student') stopQRScanner();
 }
 
+/* ─── POST helper ─── */
 async function post(url, body) {
   const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   const d = await r.json();
@@ -109,6 +185,7 @@ async function post(url, body) {
   return d;
 }
 
+/* ─── Password login ─── */
 async function loginStudent() {
   const regno = document.getElementById('s-regno').value.trim();
   const pass  = document.getElementById('s-pass').value;
@@ -151,11 +228,94 @@ async function loginTeacher() {
   }
 }
 
-// Enter key support
+/* ─── QR Scanner ─── */
+let html5QrCode = null;
+let qrScanning  = false;
+
+function showQRScanner() {
+  document.getElementById('passwordArea').style.display = 'none';
+  const area = document.getElementById('qrScannerArea');
+  area.classList.add('active');
+  startQRScanner();
+}
+
+function showPasswordLogin() {
+  stopQRScanner();
+  document.getElementById('qrScannerArea').classList.remove('active');
+  document.getElementById('passwordArea').style.display = 'block';
+}
+
+function startQRScanner() {
+  if (qrScanning) return;
+  const statusEl = document.getElementById('qrStatus');
+  statusEl.className = 'qr-status scanning';
+  statusEl.textContent = 'Starting camera...';
+
+  html5QrCode = new Html5Qrcode("qr-reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" },   // back camera preferred
+    { fps: 10, qrbox: { width: 220, height: 220 } },
+    onQRScanSuccess,
+    () => {}   // ignore scan failures (normal during scanning)
+  ).then(() => {
+    qrScanning = true;
+    statusEl.className = 'qr-status scanning';
+    statusEl.textContent = 'Scanning... show your QR code';
+  }).catch(err => {
+    statusEl.className = 'qr-status error';
+    statusEl.textContent = 'Camera access denied or unavailable';
+    console.error('QR start error:', err);
+  });
+}
+
+function stopQRScanner() {
+  if (html5QrCode && qrScanning) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      qrScanning = false;
+    }).catch(() => { qrScanning = false; });
+  }
+}
+
+async function onQRScanSuccess(decodedText) {
+  // Prevent multiple triggers
+  if (!qrScanning) return;
+  stopQRScanner();
+
+  const statusEl = document.getElementById('qrStatus');
+  statusEl.className = 'qr-status scanning';
+  statusEl.textContent = '✨ QR detected! Logging in...';
+
+  try {
+    const d = await post('/api/auth/student-qr', { token: decodedText });
+    statusEl.className = 'qr-status success';
+    statusEl.textContent = `✅ Welcome, ${d.name}!`;
+    localStorage.setItem('bm_token', d.token);
+    localStorage.setItem('bm_role',  d.role);
+    localStorage.setItem('bm_name',  d.name);
+    setTimeout(() => { window.location.href = '/student'; }, 800);
+  } catch(e) {
+    statusEl.className = 'qr-status error';
+    statusEl.textContent = '❌ ' + (e.message || 'Invalid QR code');
+    // Allow re-scanning after a short delay
+    setTimeout(() => {
+      statusEl.className = 'qr-status scanning';
+      statusEl.textContent = 'Try again...';
+      startQRScanner();
+    }, 2500);
+  }
+}
+
+/* ─── Enter key support ─── */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
-  if (document.getElementById('panel-student').classList.contains('active')) loginStudent();
-  else loginTeacher();
+  if (document.getElementById('panel-student').classList.contains('active') &&
+      document.getElementById('passwordArea').style.display !== 'none') {
+    loginStudent();
+  } else if (document.getElementById('panel-teacher').classList.contains('active')) {
+    loginTeacher();
+  }
 });
 </script>
 </body>

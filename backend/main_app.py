@@ -72,6 +72,7 @@ def teacher(): return serve("teacher.html")
 # ══════════════════════════════════════════════════════════
 class TeacherLogin(BaseModel): username:str; password:str
 class StudentLogin(BaseModel): regno:str;    password:str
+class QRLogin(BaseModel):      token:str
 class ChangePw(BaseModel):     old_password:str; new_password:str
 
 @app.post("/api/auth/teacher")
@@ -95,6 +96,28 @@ def auth_student(r:StudentLogin):
                          (r.regno.upper(),))
         if not row or not check_password(r.password, row_val(row,"password_hash")):
             raise HTTPException(401,"Invalid register number or password")
+        tok = make_token({"sub":str(row_val(row,"id")),"role":"student","name":row_val(row,"name"),"regno":row_val(row,"regno")})
+        return {"token":tok,"role":"student","name":row_val(row,"name"),"regno":row_val(row,"regno"),"cls":row_val(row,"cls")}
+    finally:
+        db.close()
+
+@app.post("/api/auth/student-qr")
+def auth_student_qr(r:QRLogin):
+    """Login a student by scanning their QR code (contains a signed JWT)."""
+    try:
+        payload = jwt.decode(r.token, SECRET, algorithms=[ALGO])
+    except JWTError:
+        raise HTTPException(401, "Invalid or expired QR code")
+    if payload.get("type") != "qr_login":
+        raise HTTPException(401, "Invalid QR code")
+    regno = payload.get("regno", "").upper()
+    if not regno:
+        raise HTTPException(401, "Invalid QR code")
+    db = get_db()
+    try:
+        row = _fetchone(db, f"SELECT id,name,regno,cls FROM students WHERE regno={p}", (regno,))
+        if not row:
+            raise HTTPException(401, "Student not found")
         tok = make_token({"sub":str(row_val(row,"id")),"role":"student","name":row_val(row,"name"),"regno":row_val(row,"regno")})
         return {"token":tok,"role":"student","name":row_val(row,"name"),"regno":row_val(row,"regno"),"cls":row_val(row,"cls")}
     finally:
@@ -309,11 +332,20 @@ def t_export(type:str,request:Request):
 # ══════════════════════════════════════════════════════════
 #  QR CODE (moved here so teacher dashboard works online)
 # ══════════════════════════════════════════════════════════
+def make_qr_token(regno:str) -> str:
+    """Create a long-lived JWT that encodes the student's regno for QR login."""
+    return jwt.encode(
+        {"type":"qr_login","regno":regno.upper(),
+         "exp":datetime.now(timezone.utc)+timedelta(days=365)},
+        SECRET, ALGO)
+
 @app.get("/api/qr")
 def get_qr(name:str, regno:str):
     filename = f"{safe(regno)}_QR.png"
     path     = os.path.join(QR_DIR, filename)
-    qrcode.make(f"Name: {name}\nReg: {regno}").save(path)
+    # Encode a signed login token instead of plain text
+    qr_token = make_qr_token(regno)
+    qrcode.make(qr_token).save(path)
     return FileResponse(path, media_type="image/png",
                         headers={"Content-Disposition":f"attachment; filename={filename}"})
 
