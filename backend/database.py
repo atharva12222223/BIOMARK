@@ -177,42 +177,6 @@ def _seed(db):
     p = PH
     _execute(db, f"INSERT INTO teachers (username,password_hash,fullname) VALUES ({p},{p},{p})",
              ("sonali", hash_password("sonali"), "Sonali Deshpande"))
-
-    data = [
-        ("Parth Kulkarni", "457CS23063", "5th Sem A", "parth123", 78, 20),
-        ("Ravi Kumar",     "457CS23041", "5th Sem A", "ravi123",  52, 20),
-        ("Priya Shetty",   "457CS23052", "5th Sem A", "priya123", 63, 14),
-        ("Arjun Das",      "457CS23017", "5th Sem A", "arjun123", 89, 20),
-        ("Meena R",        "457CS23038", "5th Sem A", "meena123", 68, 20),
-        ("Sneha Patil",    "457CS23059", "5th Sem A", "sneha123", 92, 20),
-    ]
-    subjects = ["Maths", "FOC", "IT Skills", "FEEE", "IT Lab", "FEEE Lab"]
-
-    for name, regno, cls, pw, rate, scans in data:
-        _execute(db, f"INSERT INTO students (name,regno,cls,password_hash) VALUES ({p},{p},{p},{p})",
-                 (name, regno, cls, hash_password(pw)))
-
-        if USE_PG:
-            sid = row_val(_fetchone(db, "SELECT currval(pg_get_serial_sequence('students','id')) AS id"), "id")
-        else:
-            sid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
-
-        base = datetime.now() - timedelta(days=90)
-        for d in range(90):
-            dt = (base + timedelta(days=d)).strftime("%Y-%m-%d")
-            _execute(db,
-                f"INSERT INTO attendance (student_id,date,present) VALUES ({p},{p},{p}) "
-                f"ON CONFLICT(student_id,date) DO NOTHING",
-                (sid, dt, 1 if random.random() < rate/100 else 0))
-
-        for s in subjects:
-            m = random.randint(50, 98)
-            g = "A+" if m >= 90 else "A" if m >= 80 else "B+" if m >= 70 else "B" if m >= 60 else "C"
-            _execute(db, f"INSERT INTO marks (student_id,subject,marks,grade) VALUES ({p},{p},{p},{p})",
-                     (sid, s, m, g))
-
-        _execute(db, f"INSERT INTO face_scans (student_id,scan_count) VALUES ({p},{p})",
-                 (sid, scans))
-
     db.commit()
-    print("[OK] Seeded | Teacher: sonali/sonali | Student: 457CS23063/parth123")
+    print("[OK] Seeded | Teacher: sonali/sonali")
+
