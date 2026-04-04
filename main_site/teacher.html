@@ -775,7 +775,7 @@
         <li onclick="show('marks')"><i class="fa-solid fa-star"></i> <span>Marks</span></li>
         <li onclick="show('add')"><i class="fa-solid fa-user-plus"></i> <span>Add Student</span></li>
         <li onclick="show('qr')"><i class="fa-solid fa-qrcode"></i> <span>QR Lookup</span></li>
-        <li onclick="show('scans')"><i class="fa-solid fa-camera"></i> <span>Face Scans</span></li>
+
         <li onclick="show('export')"><i class="fa-solid fa-file-csv"></i> <span>Export</span></li>
       </ul>
     </aside>
@@ -970,6 +970,14 @@
           </div>
           <div class="qr-result" id="qrResult"></div>
         </div>
+        <div class="card" style="text-align:center">
+          <div class="card-title" style="justify-content:center"><i class="fa-solid fa-file-zipper"></i> Bulk Download</div>
+          <p style="color:var(--tx);font-size:.85rem;margin-bottom:14px">Download QR codes for all registered students as a single ZIP file</p>
+          <button class="btn-prim" onclick="downloadAllQRs()" id="dlAllQrBtn">
+            <i class="fa-solid fa-download"></i> Download All QRs (ZIP)
+          </button>
+          <div class="fmsg" id="dlAllQrMsg"></div>
+        </div>
       </section>
 
       <!-- EXPORT -->
@@ -993,13 +1001,6 @@
                 class="fa-solid fa-download"></i> Download CSV</button>
           </div>
         </div>
-      </section>
-
-      <!-- FACE SCANS -->
-      <section id="scans" class="section">
-        <div class="pg-title">Face Scan Status</div>
-        <div class="pg-sub">Overview of face registration progress for all students</div>
-        <div class="scan-grid" id="scanGrid"></div>
       </section>
 
     </main>
@@ -1082,7 +1083,7 @@
     // Sections
     const sectionLoad = {
       overview: renderOverview, students: renderStudentsTable, today: loadToday,
-      records: renderRecords, scans: renderScans
+      records: renderRecords
     };
     function show(id) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1203,16 +1204,7 @@
       } else { msg.className = 'fmsg err'; msg.textContent = d.detail || 'Error'; }
     }
 
-    // Face scan grid
-    function renderScans() {
-      document.getElementById('scanGrid').innerHTML = allStudents.map(s => `
-    <div class="scan-card">
-      <div class="scan-icon">${s.scan_count >= 20 ? '✅' : '⏳'}</div>
-      <div class="scan-name">${s.name}</div>
-      <div class="scan-ct">${s.scan_count}/20 frames</div>
-      <div class="scan-track"><div class="scan-fill" style="width:${Math.min(s.scan_count / 20 * 100, 100)}%"></div></div>
-    </div>`).join('');
-    }
+
 
     // QR Lookup
     document.addEventListener('DOMContentLoaded', () => {
@@ -1223,11 +1215,24 @@
       const s = allStudents.find(x => x.regno.toLowerCase() === q || x.name.toLowerCase().includes(q));
       const el = document.getElementById('qrResult');
       if (s) {
+        const qrSrc = `/api/qr?name=${encodeURIComponent(s.name)}&regno=${encodeURIComponent(s.regno)}`;
         el.innerHTML = `
-      <img src="/api/qr?name=${encodeURIComponent(s.name)}&regno=${encodeURIComponent(s.regno)}" alt="QR">
+      <img src="${qrSrc}" alt="QR">
       <p style="margin-top:12px;font-weight:700">${s.name}</p>
-      <p style="color:var(--tx);font-size:.88rem">${s.regno} · ${s.pct}% attendance</p>`;
+      <p style="color:var(--tx);font-size:.88rem">${s.regno} · ${s.pct}% attendance</p>
+      <button class="btn-prim" style="margin-top:14px" onclick="downloadQR('${qrSrc}','${s.regno}')">
+        <i class="fa-solid fa-download"></i> Download QR
+      </button>`;
       } else { el.innerHTML = '<p style="color:#e74c3c;font-weight:600">No student found</p>'; }
+    }
+
+    async function downloadQR(url, regno) {
+      const r = await fetch(url);
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${regno}_QR.png`;
+      a.click();
     }
 
     // Export
@@ -1235,6 +1240,30 @@
       const r = await fetch(`/api/teacher/export/${type}`, { headers: H });
       const blob = await r.blob();
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `biomark_${type}.csv`; a.click();
+    }
+
+    async function downloadAllQRs() {
+      const btn = document.getElementById('dlAllQrBtn');
+      const msg = document.getElementById('dlAllQrMsg');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating ZIP...';
+      msg.textContent = '';
+      try {
+        const r = await fetch('/api/teacher/export/qrcodes', { headers: H });
+        if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Failed'); }
+        const blob = await r.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'biomark_all_qrcodes.zip';
+        a.click();
+        msg.className = 'fmsg ok'; msg.textContent = '✅ ZIP downloaded!';
+        setTimeout(() => msg.textContent = '', 3000);
+      } catch (e) {
+        msg.className = 'fmsg err'; msg.textContent = e.message || 'Download failed';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-download"></i> Download All QRs (ZIP)';
+      }
     }
 
     // Edit modal

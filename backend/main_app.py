@@ -1,4 +1,4 @@
-import os, re, csv, io
+import os, re, csv, io, zipfile
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
@@ -328,6 +328,33 @@ def t_export(type:str,request:Request):
     out.seek(0)
     return StreamingResponse(iter([out.getvalue()]),media_type="text/csv",
                              headers={"Content-Disposition":f"attachment; filename=biomark_{type}.csv"})
+
+@app.get("/api/teacher/export/qrcodes")
+def t_export_all_qrs(request:Request):
+    """Generate a ZIP file containing QR codes for all registered students."""
+    teacher_only(request)
+    db = get_db()
+    try:
+        rows = _fetchall(db, "SELECT name, regno FROM students ORDER BY name")
+    finally:
+        db.close()
+    if not rows:
+        raise HTTPException(404, "No students found")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for r in rows:
+            name  = row_val(r, "name")
+            regno = row_val(r, "regno")
+            token = make_qr_token(regno)
+            img   = qrcode.make(token)
+            img_buf = io.BytesIO()
+            img.save(img_buf, format='PNG')
+            zf.writestr(f"{safe(regno)}_QR.png", img_buf.getvalue())
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition":"attachment; filename=biomark_all_qrcodes.zip"})
 
 # ══════════════════════════════════════════════════════════
 #  QR CODE (moved here so teacher dashboard works online)
