@@ -123,6 +123,10 @@ def init_db():
                 scan_count INTEGER NOT NULL DEFAULT 0
             );
         """)
+        
+        # Upgrade existing 'sonali' user to core admin instantly for Postgres (Render)
+        cur.execute("UPDATE teachers SET is_admin = true WHERE username = 'sonali'")
+        
         cur.close()
         db.commit()
 
