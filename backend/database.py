@@ -125,7 +125,7 @@ def init_db():
         """)
         
         # Upgrade existing 'sonali' user to core admin instantly for Postgres (Render)
-        cur.execute("UPDATE teachers SET is_admin = true WHERE username = 'sonali'")
+        cur.execute("UPDATE teachers SET is_admin = 1 WHERE username = 'sonali'")
         
         cur.close()
         db.commit()
