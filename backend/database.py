@@ -172,6 +172,9 @@ def init_db():
         except:
             pass # ignore if already exists
 
+        # Upgrade existing 'sonali' user to core admin automatically if she already exists
+        _execute(db, "UPDATE teachers SET is_admin = 1 WHERE username = 'sonali'")
+
         if db.execute("SELECT COUNT(*) FROM teachers").fetchone()[0] == 0:
             _seed(db)
         db.commit()
