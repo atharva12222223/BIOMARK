@@ -43,6 +43,11 @@ def teacher_only(request:Request):
     if pl.get("role") != "teacher": raise HTTPException(403,"Teachers only")
     return pl
 
+def admin_only(request:Request):
+    pl = teacher_only(request)
+    if not pl.get("is_admin"): raise HTTPException(403,"Admin teachers only")
+    return pl
+
 def student_only(request:Request):
     pl = get_payload(request)
     if pl.get("role") != "student": raise HTTPException(403,"Students only")
@@ -79,12 +84,14 @@ class ChangePw(BaseModel):     old_password:str; new_password:str
 def auth_teacher(r:TeacherLogin):
     db  = get_db()
     try:
-        row = _fetchone(db, f"SELECT id,password_hash,fullname FROM teachers WHERE username={p}",
+        row = _fetchone(db, f"SELECT id,password_hash,fullname,is_admin FROM teachers WHERE username={p}",
                          (r.username.lower(),))
         if not row or not check_password(r.password, row_val(row,"password_hash")):
             raise HTTPException(401,"Invalid username or password")
-        tok = make_token({"sub":str(row_val(row,"id")),"role":"teacher","name":row_val(row,"fullname")})
-        return {"token":tok,"role":"teacher","name":row_val(row,"fullname")}
+        
+        is_admin = bool(row_val(row, "is_admin"))
+        tok = make_token({"sub":str(row_val(row,"id")),"role":"teacher","name":row_val(row,"fullname"), "is_admin": is_admin})
+        return {"token":tok,"role":"teacher","name":row_val(row,"fullname"),"is_admin":is_admin}
     finally:
         db.close()
 
@@ -197,7 +204,7 @@ class AddStu(BaseModel): name:str;regno:str;cls:str;password:str
 
 @app.post("/api/teacher/students")
 def t_add_student(r:AddStu,request:Request):
-    teacher_only(request)
+    admin_only(request)
     db = get_db()
     try:
         if _fetchone(db, f"SELECT id FROM students WHERE regno={p}",(r.regno.upper(),)):
@@ -213,7 +220,7 @@ class EditStu(BaseModel): name:str;regno:str;cls:str
 
 @app.put("/api/teacher/students/{sid}")
 def t_edit_student(sid:int,r:EditStu,request:Request):
-    teacher_only(request)
+    admin_only(request)
     db = get_db()
     try:
         if _fetchone(db, f"SELECT id FROM students WHERE regno={p} AND id!={p}",(r.regno.upper(),sid)):
@@ -227,7 +234,7 @@ def t_edit_student(sid:int,r:EditStu,request:Request):
 
 @app.delete("/api/teacher/students/{sid}")
 def t_del_student(sid:int,request:Request):
-    teacher_only(request)
+    admin_only(request)
     db = get_db()
     try:
         _execute(db, f"DELETE FROM students WHERE id={p}",(sid,))
@@ -244,7 +251,7 @@ class MarkBody(BaseModel):
 
 @app.post("/api/teacher/marks")
 def t_mark(r:MarkBody,request:Request):
-    teacher_only(request)
+    admin_only(request)
     db = get_db()
     try:
         _execute(db,
@@ -260,13 +267,34 @@ class AttBody(BaseModel): student_id:int;date:str;present:bool
 
 @app.post("/api/teacher/attendance")
 def t_att(r:AttBody,request:Request):
-    teacher_only(request)
+    admin_only(request)
     db = get_db()
     try:
         _execute(db,
             f"INSERT INTO attendance (student_id,date,present) VALUES ({p},{p},{p}) "
             f"ON CONFLICT(student_id,date) DO UPDATE SET present=excluded.present",
             (r.student_id,r.date,1 if r.present else 0))
+        db.commit()
+        return {"success":True}
+    finally:
+        db.close()
+
+class AddTeacherBody(BaseModel):
+    username: str
+    password: str
+    fullname: str
+    is_admin: bool
+
+@app.post("/api/admin/teachers")
+def admin_add_teacher(r:AddTeacherBody, request:Request):
+    admin_only(request)
+    db = get_db()
+    try:
+        if _fetchone(db, f"SELECT id FROM teachers WHERE username={p}",(r.username.lower(),)):
+            raise HTTPException(400,"Username already exists")
+        admin_val = 1 if r.is_admin else 0
+        _execute(db, f"INSERT INTO teachers (username,password_hash,fullname,is_admin) VALUES ({p},{p},{p},{p})",
+                 (r.username.lower(),hash_password(r.password),r.fullname,admin_val))
         db.commit()
         return {"success":True}
     finally:

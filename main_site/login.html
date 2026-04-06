@@ -220,6 +220,7 @@ async function loginTeacher() {
     localStorage.setItem('bm_token', d.token);
     localStorage.setItem('bm_role',  d.role);
     localStorage.setItem('bm_name',  d.name);
+    localStorage.setItem('bm_is_admin', d.is_admin);
     window.location.href = '/teacher';
   } catch(e) {
     err.textContent = e.message;

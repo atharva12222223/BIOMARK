@@ -91,8 +91,10 @@ def init_db():
                 id            SERIAL PRIMARY KEY,
                 username      TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
-                fullname      TEXT NOT NULL
+                fullname      TEXT NOT NULL,
+                is_admin      INTEGER NOT NULL DEFAULT 0
             );
+            ALTER TABLE teachers ADD COLUMN IF NOT EXISTS is_admin INTEGER NOT NULL DEFAULT 0;
             CREATE TABLE IF NOT EXISTS students (
                 id            SERIAL PRIMARY KEY,
                 name          TEXT NOT NULL,
@@ -134,7 +136,8 @@ def init_db():
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
                 username      TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
-                fullname      TEXT NOT NULL
+                fullname      TEXT NOT NULL,
+                is_admin      INTEGER NOT NULL DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS students (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -164,6 +167,11 @@ def init_db():
                 scan_count INTEGER NOT NULL DEFAULT 0
             );
         """)
+        try:
+            db.execute("ALTER TABLE teachers ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+        except:
+            pass # ignore if already exists
+
         if db.execute("SELECT COUNT(*) FROM teachers").fetchone()[0] == 0:
             _seed(db)
         db.commit()
@@ -175,8 +183,8 @@ def init_db():
 # ═══════════════════════════════════════════════════════
 def _seed(db):
     p = PH
-    _execute(db, f"INSERT INTO teachers (username,password_hash,fullname) VALUES ({p},{p},{p})",
+    _execute(db, f"INSERT INTO teachers (username,password_hash,fullname,is_admin) VALUES ({p},{p},{p},1)",
              ("sonali", hash_password("sonali"), "Sonali Deshpande"))
     db.commit()
-    print("[OK] Seeded | Teacher: sonali/sonali")
+    print("[OK] Seeded | Teacher: sonali/sonali (Admin)")
 

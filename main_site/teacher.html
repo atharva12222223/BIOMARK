@@ -509,6 +509,11 @@
       color: #e74c3c
     }
 
+    /* RBAC */
+    .admin-only { display: none !important; }
+    body.is-admin .admin-only { display: block !important; }
+    body.is-admin li.admin-only { display: flex !important; }
+
     /* FACE SCAN GRID */
     .scan-grid {
       display: grid;
@@ -770,10 +775,11 @@
       <ul class="sidebar-nav">
         <li class="active" onclick="show('overview')"><i class="fa-solid fa-gauge"></i> <span>Overview</span></li>
         <li onclick="show('students')"><i class="fa-solid fa-users"></i> <span>Students</span></li>
-        <li onclick="show('today')"><i class="fa-solid fa-calendar-day"></i> <span>Mark Today</span></li>
+        <li onclick="show('today')" class="admin-only"><i class="fa-solid fa-calendar-day"></i> <span>Mark Today</span></li>
         <li onclick="show('records')"><i class="fa-solid fa-calendar-check"></i> <span>Records</span></li>
-        <li onclick="show('marks')"><i class="fa-solid fa-star"></i> <span>Marks</span></li>
-        <li onclick="show('add')"><i class="fa-solid fa-user-plus"></i> <span>Add Student</span></li>
+        <li onclick="show('marks')" class="admin-only"><i class="fa-solid fa-star"></i> <span>Marks</span></li>
+        <li onclick="show('add')" class="admin-only"><i class="fa-solid fa-user-plus"></i> <span>Add Student</span></li>
+        <li onclick="show('addTeacher')" class="admin-only"><i class="fa-solid fa-user-tie"></i> <span>Add Teacher</span></li>
         <li onclick="show('qr')"><i class="fa-solid fa-qrcode"></i> <span>QR Lookup</span></li>
 
         <li onclick="show('export')"><i class="fa-solid fa-file-csv"></i> <span>Export</span></li>
@@ -958,6 +964,33 @@
         </div>
       </section>
 
+      <!-- ADD TEACHER -->
+      <section id="addTeacher" class="section">
+        <div class="pg-title">Add Teacher</div>
+        <div class="pg-sub">Create a new teacher account and set permissions</div>
+        <div class="card">
+          <div class="form-grid">
+            <div class="fg"><label>Full Name</label>
+              <input type="text" id="addTName" placeholder="e.g. John Doe">
+            </div>
+            <div class="fg"><label>Username</label>
+              <input type="text" id="addTUser" placeholder="e.g. johndoe">
+            </div>
+            <div class="fg"><label>Role</label>
+              <select id="addTRole">
+                <option value="0">Regular Teacher (Read Only)</option>
+                <option value="1">Admin (Full Access)</option>
+              </select>
+            </div>
+            <div class="fg"><label>Password</label>
+              <input type="password" id="addTPw" placeholder="Min 6 chars">
+            </div>
+          </div>
+          <div style="margin-top:14px"><button class="btn-prim" onclick="addTeacher()"><i class="fa-solid fa-plus"></i>
+              Add Teacher</button></div>
+          <div class="fmsg" id="addTMsg"></div>
+        </div>
+      </section>
 
       <!-- QR LOOKUP -->
       <section id="qr" class="section">
@@ -1056,7 +1089,10 @@
   <script>
     const token = localStorage.getItem('bm_token');
     const role = localStorage.getItem('bm_role');
+    const isAdmin = localStorage.getItem('bm_is_admin') === 'true';
     if (!token || role !== 'teacher') window.location.href = '/login';
+
+    if (isAdmin) document.body.classList.add('is-admin');
 
     const H = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
     let allStudents = [];
@@ -1130,8 +1166,8 @@
       <td>${i + 1}</td><td class="tdb">${s.name}</td><td>${s.regno}</td><td>${s.cls}</td>
       <td><span class="badge ${s.pct >= 75 ? 'bg' : s.pct >= 65 ? 'bw' : 'br'}">${s.pct}%</span></td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn-e" onclick="openEdit(${s.id},'${esc(s.name)}','${s.regno}','${esc(s.cls)}')"><i class="fa-solid fa-pen"></i> Edit</button>
-        <button class="btn-d" onclick="delStudent(${s.id},'${esc(s.name)}')"><i class="fa-solid fa-trash"></i></button>
+        ${isAdmin ? `<button class="btn-e" onclick="openEdit(${s.id},'${esc(s.name)}','${s.regno}','${esc(s.cls)}')"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="btn-d" onclick="delStudent(${s.id},'${esc(s.name)}')"><i class="fa-solid fa-trash"></i></button>` : '<span style="font-size:0.75rem;color:var(--tx)">Read Only</span>'}
       </td>
     </tr>`).join('');
     }
@@ -1160,8 +1196,8 @@
     <tr>
       <td class="tdb">${r.name}</td><td>${r.regno}</td>
       <td>
-        <button class="att-btn p ${r.present === true ? 'on' : ''}" onclick="markAtt(${r.id},'${r.date}',true,this)">✅ Present</button>
-        <button class="att-btn a ${r.present === false ? 'on' : ''}" onclick="markAtt(${r.id},'${r.date}',false,this)">❌ Absent</button>
+        ${isAdmin ? `<button class="att-btn p ${r.present === true ? 'on' : ''}" onclick="markAtt(${r.id},'${r.date}',true,this)">✅ Present</button>
+        <button class="att-btn a ${r.present === false ? 'on' : ''}" onclick="markAtt(${r.id},'${r.date}',false,this)">❌ Absent</button>` : '<span style="font-size:0.75rem;color:var(--tx)">Read Only</span>'}
       </td>
     </tr>`).join('');
     }
@@ -1204,7 +1240,24 @@
       } else { msg.className = 'fmsg err'; msg.textContent = d.detail || 'Error'; }
     }
 
-
+    // Add teacher
+    async function addTeacher() {
+      const name = document.getElementById('addTName').value.trim();
+      const user = document.getElementById('addTUser').value.trim().toLowerCase();
+      const roleSel = document.getElementById('addTRole').value;
+      const isAdminFlag = roleSel === '1';
+      const pw = document.getElementById('addTPw').value;
+      const msg = document.getElementById('addTMsg');
+      if (!name || !user || !pw) { msg.className = 'fmsg err'; msg.textContent = 'All fields required.'; return; }
+      if (pw.length < 6) { msg.className = 'fmsg err'; msg.textContent = 'Password too short.'; return; }
+      
+      const r = await fetch('/api/admin/teachers', { method: 'POST', headers: H, body: JSON.stringify({ fullname: name, username: user, password: pw, is_admin: isAdminFlag }) });
+      const d = await r.json();
+      if (r.ok) {
+        msg.className = 'fmsg ok'; msg.textContent = `✅ Teacher ${name} added!`;
+        document.getElementById('addTName').value = ''; document.getElementById('addTUser').value = ''; document.getElementById('addTPw').value = '';
+      } else { msg.className = 'fmsg err'; msg.textContent = d.detail || 'Error'; }
+    }
 
     // QR Lookup
     document.addEventListener('DOMContentLoaded', () => {

@@ -29,7 +29,7 @@ FACE_DIR   = os.path.join(SCRIPT_DIR, "faces")
 EXCEL_DIR  = os.path.join(SCRIPT_DIR, "attendance_sheets")
 FACE_SIZE  = (100, 100)
 THRESHOLD  = 0.20       # recognition confidence threshold
-COOLDOWN   = 5          # seconds before same student can be marked again
+COOLDOWN   = 5         # seconds before same student can be marked again
 CAM_INDEX  = 0          # camera index (try 1 if 0 doesn't work)
 
 # ── REMOTE MODE ─────────────────────────────────────────
@@ -324,14 +324,15 @@ def main():
     print("✅ Camera opened. Starting attendance marking...\n")
 
     # State
-    cooldown_map  = {}     # {regno: last_marked_timestamp}
-    marked_today  = set()  # regnos marked in this session
+    marked_today  = set()  # regnos marked in this session or known to be already marked
     log_entries   = []     # display log ["Name (regno)", ...]
     last_recog    = None   # last recognised result for stable display
     stable_frames = 0      # how many consecutive frames same person was seen
-    STABLE_NEEDED = 8      # frames before marking (reduces false positives)
+    STABLE_NEEDED = 6      # reduced slightly for faster recognition
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    # A "school day" logically shifts at 6:00 AM (safely before 8 AM start but after midnight)
+    from datetime import timedelta
+    current_school_day = (datetime.now() - timedelta(hours=6)).strftime("%Y-%m-%d")
 
     while True:
         ret, frame = cap.read()
@@ -339,13 +340,24 @@ def main():
             print("❌ Camera read failed."); break
 
         frame = cv2.flip(frame, 1)   # mirror for natural feel
-        today = datetime.now().strftime("%Y-%m-%d")
-        now   = time.time()
+        
+        # Check if crossed 6 AM to reset daily memory
+        now_dt = datetime.now()
+        logical_day = (now_dt - timedelta(hours=6)).strftime("%Y-%m-%d")
+        
+        if logical_day != current_school_day:
+            current_school_day = logical_day
+            marked_today.clear()
+            log_entries.clear()
+            print(f"\n🌅 School day reset! Memory cleared and ready for {now_dt.strftime('%A')} morning.")
+
+        today = now_dt.strftime("%Y-%m-%d") # Still use actual calendar date for the database
+        now = time.time()
 
         # Detect face
         face_crop, bbox = detect_and_crop(frame)
 
-        status_text  = "Scanning for face..."
+        status_text  = ""
         status_color = (60, 60, 60)
         box_color    = (180, 180, 180)
         box_label    = "Face detected"
@@ -362,11 +374,6 @@ def main():
 
                 if student:
                     name = student["name"]
-                    pct  = int(confidence * 100)
-
-                    # Check cooldown
-                    last_time = cooldown_map.get(regno, 0)
-                    on_cooldown = (now - last_time) < COOLDOWN
 
                     # Stable recognition check
                     if last_recog == regno:
@@ -375,77 +382,77 @@ def main():
                         stable_frames = 0
                         last_recog    = regno
 
-                    if on_cooldown:
-                        # Already marked recently — show green confirmation
+                    # Check if already marked today
+                    if regno in marked_today:
                         box_color    = (0, 200, 0)
                         box_label    = f"{name}"
-                        box_sub      = f"Already marked ({pct}%)"
-                        status_text  = f"✓ {name} — Already marked today"
+                        box_sub      = "Already Marked Today"
+                        status_text  = f"{name} — Already Marked"
                         status_color = (0, 130, 0)
 
                     elif stable_frames >= STABLE_NEEDED:
                         # MARK ATTENDANCE
-                        # Mark in local DB
                         marked_new = mark_in_db(student["id"], today)
                         time_str   = datetime.now().strftime("%H:%M:%S")
 
-                        # Also mark on remote server if configured
-                        remote_ok = ""
-                        if USE_REMOTE:
-                            if mark_remote(regno, today):
-                                remote_ok = " | Remote ✅"
-                            else:
-                                remote_ok = " | Remote ❌"
+                        # If the DB says it was already marked (from a previous session today)
+                        if not marked_new:
+                            marked_today.add(regno)
+                            box_color    = (0, 200, 0)
+                            box_label    = f"{name}"
+                            box_sub      = "Already Marked Today"
+                            status_text  = f"{name} — Already Marked"
+                            status_color = (0, 130, 0)
+                            print(f"  ℹ️ {name:25s} | {regno.upper():12s} | Already in DB for today")
+                        else:
+                            # Actually newly marked!
+                            marked_today.add(regno)
+                            
+                            # Also mark on remote server if configured
+                            remote_ok = ""
+                            if USE_REMOTE:
+                                if mark_remote(regno, today):
+                                    remote_ok = " | Remote ✅"
+                                else:
+                                    remote_ok = " | Remote ❌"
 
-                        save_to_excel(
-                            name, regno.upper(),
-                            student.get("cls",""),
-                            today, time_str
-                        )
+                            save_to_excel(
+                                name, regno.upper(),
+                                student.get("cls",""),
+                                today, time_str
+                            )
 
-                        cooldown_map[regno] = now
-                        marked_today.add(regno)
-                        stable_frames = 0
+                            log_entry = f"{name} ({regno.upper()})"
+                            if log_entry not in log_entries:
+                                log_entries.append(log_entry)
 
-                        log_entry = f"{name} ({regno.upper()})"
-                        if log_entry not in log_entries:
-                            log_entries.append(log_entry)
+                            print(f"  ✅ {name:25s} | {regno.upper():12s} | {time_str} | DB updated{remote_ok}")
 
-                        print(f"  ✅ {name:25s} | {regno.upper():12s} | {time_str} | conf:{pct}%"
-                              + (" | DB updated" if marked_new else " | Already in DB") + remote_ok)
-
-                        box_color    = (0, 255, 80)
-                        box_label    = f"{name}"
-                        box_sub      = f"MARKED ✓ ({pct}%)"
-                        status_text  = f"✅ Attendance marked — {name}"
-                        status_color = (0, 160, 0)
+                            box_color    = (0, 255, 80)
+                            box_label    = f"{name}"
+                            box_sub      = "Marked \u2713"
+                            status_text  = f"Attendance marked — {name}"
+                            status_color = (0, 160, 0)
 
                     else:
-                        # Recognised but stabilising
+                        # Recognised but stabilising (don't show "Verifying..." to keep GUI clean)
                         box_color    = (0, 200, 255)
                         box_label    = f"{name}"
-                        box_sub      = f"Verifying... ({stable_frames}/{STABLE_NEEDED})"
-                        status_text  = f"Verifying: {name} ({pct}% confidence)"
-                        status_color = (180, 120, 0)
+                        box_sub      = "..."
 
             else:
                 # Face detected but not recognised
                 last_recog    = None
                 stable_frames = 0
-                pct           = int(confidence * 100)
                 box_color     = (0, 80, 255)
                 box_label     = "Unknown"
-                box_sub       = f"Conf: {pct}% (need {int(THRESHOLD*100)}%)"
-                status_text   = f"Unknown face — confidence {pct}% (threshold {int(THRESHOLD*100)}%)"
-                status_color  = (0, 60, 180)
+                box_sub       = ""
 
             draw_box(frame, x, y, w, h, box_color, box_label, box_sub)
 
         else:
             last_recog    = None
             stable_frames = 0
-            status_text   = "No face detected — please look at camera"
-            status_color  = (50, 50, 50)
 
         # Draw overlays
         draw_status_bar(frame, status_text, status_color)
