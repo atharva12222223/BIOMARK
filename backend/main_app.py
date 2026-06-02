@@ -382,7 +382,7 @@ def t_export_all_qrs(request:Request):
             token = make_qr_token(regno)
             img   = qrcode.make(token)
             img_buf = io.BytesIO()
-            img.save(img_buf, format='PNG')
+            img.save(img_buf)
             zf.writestr(f"{safe(regno)}_QR.png", img_buf.getvalue())
     buf.seek(0)
     return StreamingResponse(
