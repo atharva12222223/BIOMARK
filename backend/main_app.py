@@ -24,7 +24,13 @@ app.add_middleware(CORSMiddleware, allow_origins=allowed_origins, allow_methods=
 app.mount("/static", StaticFiles(directory=SITE_DIR), name="static")
 
 @app.on_event("startup")
-def startup(): init_db()
+def startup():
+    try:
+        init_db()
+        print("[OK] Database initialized successfully")
+    except Exception as e:
+        print(f"[ERROR] Database init failed: {e}")
+        import traceback; traceback.print_exc()
 
 # ── helpers ─────────────────────────────────────────────
 p = PH  # placeholder shorthand
